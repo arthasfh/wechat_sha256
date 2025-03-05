@@ -1,21 +1,36 @@
 //====== hash 256
 export function sha256(message: string): string {
     function utf8Encode(str: string): number[] {
-        let utf8 = [];
-        for (let i = 0; i < str.length; i++) {
-            let charcode = str.charCodeAt(i);
-            if (charcode < 0x80) utf8.push(charcode);
-            else if (charcode < 0x800) {
-                utf8.push(0xc0 | (charcode >> 6), 0x80 | (charcode & 0x3f));
-            } else if (charcode < 0x10000) {
-                utf8.push(0xe0 | (charcode >> 12), 0x80 | ((charcode >> 6) & 0x3f), 0x80 | (charcode & 0x3f));
+        let utf8: number[] = [];
+        let i = 0;
+        while (i < str.length) {
+            let code = str.charCodeAt(i++);
+            // 处理代理对
+            if (0xD800 <= code && code <= 0xDBFF && i < str.length) {
+                const next = str.charCodeAt(i);
+                if (0xDC00 <= next && next <= 0xDFFF) {
+                    code = (code - 0xD800) * 0x400 + (next - 0xDC00) + 0x10000;
+                    i++;
+                }
+            }
+            // 编码码点
+            if (code < 0x80) {
+                utf8.push(code);
+            } else if (code < 0x800) {
+                utf8.push(0xC0 | (code >> 6), 0x80 | (code & 0x3F));
+            } else if (code < 0x10000) {
+                utf8.push(0xE0 | (code >> 12), 0x80 | ((code >> 6) & 0x3F), 0x80 | (code & 0x3F));
             } else {
-                utf8.push(0xf0 | (charcode >> 18), 0x80 | ((charcode >> 12) & 0x3f), 0x80 | ((charcode >> 6) & 0x3f), 0x80 | (charcode & 0x3f));
+                utf8.push(
+                    0xF0 | (code >> 18),
+                    0x80 | ((code >> 12) & 0x3F),
+                    0x80 | ((code >> 6) & 0x3F),
+                    0x80 | (code & 0x3F)
+                );
             }
         }
         return utf8;
     }
-
     function rightRotate(value: number, amount: number): number {
         return (value >>> amount) | (value << (32 - amount));
     }
@@ -52,7 +67,7 @@ export function sha256(message: string): string {
         for (let j = 16; j < 64; j++) {
             let s0 = rightRotate(w[j - 15], 7) ^ rightRotate(w[j - 15], 18) ^ (w[j - 15] >>> 3);
             let s1 = rightRotate(w[j - 2], 17) ^ rightRotate(w[j - 2], 19) ^ (w[j - 2] >>> 10);
-            w[j] = (w[j - 16] + s0 + w[j - 7] + s1) | 0;
+            w[j] = (((w[j - 16] + s0) | 0) + ((w[j - 7] + s1) | 0)) | 0;
         }
 
         let a = h0, b = h1, c = h2, d = h3, e = h4, f = h5, g = h6, h = h7;
