@@ -1,3 +1,4 @@
+
 //====== hash 256
 export function sha256(message: string): string {
     function utf8Encode(str: string): number[] {
@@ -32,7 +33,7 @@ export function sha256(message: string): string {
         return utf8;
     }
     function rightRotate(value: number, amount: number): number {
-        return (value >>> amount) | (value << (32 - amount));
+        return ((value >>> amount) | (value << (32 - amount))) >>> 0;
     }
 
     const data = utf8Encode(message);
@@ -67,26 +68,29 @@ export function sha256(message: string): string {
         for (let j = 16; j < 64; j++) {
             let s0 = rightRotate(w[j - 15], 7) ^ rightRotate(w[j - 15], 18) ^ (w[j - 15] >>> 3);
             let s1 = rightRotate(w[j - 2], 17) ^ rightRotate(w[j - 2], 19) ^ (w[j - 2] >>> 10);
-            w[j] = (((w[j - 16] + s0) | 0) + ((w[j - 7] + s1) | 0)) | 0;
+            w[j] = (((w[j - 16] + s0) >>> 0) + ((w[j - 7] + s1) >>> 0)) >>> 0;
         }
 
         let a = h0, b = h1, c = h2, d = h3, e = h4, f = h5, g = h6, h = h7;
         for (let j = 0; j < 64; j++) {
             let S1 = rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25);
             let ch = (e & f) ^ (~e & g);
-            let temp1 = (h + S1 + ch + K[j] + w[j]) | 0;
+            let temp1 = (h + S1 + ch + K[j] + w[j]) >>> 0;
             let S0 = rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22);
             let maj = (a & b) ^ (a & c) ^ (b & c);
-            let temp2 = (S0 + maj) | 0;
+            let temp2 = (S0 + maj) >>> 0;
 
-            h = g; g = f; f = e; e = (d + temp1) | 0;
-            d = c; c = b; b = a; a = (temp1 + temp2) | 0;
+            h = g; g = f; f = e; e = (d + temp1) >>> 0;
+            d = c; c = b; b = a; a = (temp1 + temp2) >>> 0;
         }
 
-        h0 = (h0 + a) | 0; h1 = (h1 + b) | 0; h2 = (h2 + c) | 0; h3 = (h3 + d) | 0;
-        h4 = (h4 + e) | 0; h5 = (h5 + f) | 0; h6 = (h6 + g) | 0; h7 = (h7 + h) | 0;
+        h0 = (h0 + a) >>> 0; h1 = (h1 + b) >>> 0; h2 = (h2 + c) >>> 0; h3 = (h3 + d) >>> 0;
+        h4 = (h4 + e) >>> 0; h5 = (h5 + f) >>> 0; h6 = (h6 + g) >>> 0; h7 = (h7 + h) >>> 0;
     }
 
-    return [h0, h1, h2, h3, h4, h5, h6, h7].map(h => ('00000000' + (h >>> 0).toString(16)).slice(-8)).join('');
+    //return [h0, h1, h2, h3, h4, h5, h6, h7].map(h => ('00000000' + (h >>> 0).toString(16)).slice(-8)).join('');
+    return [h0, h1, h2, h3, h4, h5, h6, h7]
+    .map(h => (h >>> 0).toString(16).padStart(8, '0'))
+    .join('');
 }
 //====== hash 256
